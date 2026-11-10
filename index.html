@@ -146,7 +146,8 @@
                 </div>
 
                 <div id="preview-box" class="hidden space-y-3">
-                    <p class="text-xs text-slate-400 font-medium">รูปภาพที่เลือก (<span id="selected-count">0</span> รูป) - <span class="text-indigo-400">คลิกรูปเพื่อดูภาพใหญ่</span>:</p>
+                    <p class="text-xs text-slate-400 font-medium">รูปภาพที่เลือก (<span id="selected-count">0</span> รูป) - <span class="text-indigo-400">คลิกรูปเพื่อดูภาพใหญ่ / กด ✕ เพื่อลบรูป</span>:</p>
+                    <!-- ช่องแสดงพรีวิวพร้อมปุ่มกากบาทลบรูป -->
                     <div id="preview-grid" class="grid grid-cols-4 gap-2 p-2 border border-slate-800 rounded-xl bg-slate-950 max-h-40 overflow-y-auto"></div>
                     
                     <!-- ปุ่มให้ AI (Gemini 3.6 Flash) ของจริงช่วยวิเคราะห์สินค้า -->
@@ -346,9 +347,7 @@
 
         function resetManualForm() {
             selectedImagesBase64 = [];
-            document.getElementById('preview-box').classList.add('hidden');
-            document.getElementById('preview-grid').innerHTML = '';
-            document.getElementById('selected-count').innerText = '0';
+            renderImagePreview();
             document.getElementById('camera-input').value = '';
             document.getElementById('gallery-input').value = '';
             document.getElementById('manual-name').value = '';
@@ -389,7 +388,6 @@
         function handleImageSelect(event) {
             const files = event.target.files;
             if (files && files.length > 0) {
-                const grid = document.getElementById('preview-grid');
                 let processedCount = 0;
                 
                 Array.from(files).forEach((file) => {
@@ -426,11 +424,7 @@
                             processedCount++;
                             
                             if (processedCount === files.length) {
-                                grid.innerHTML = selectedImagesBase64.map((imgSrc, index) => `
-                                    <img src="${imgSrc}" class="w-full h-16 object-cover rounded-lg border border-slate-700 cursor-pointer hover:opacity-80 transition" onclick="openImageModal(selectedImagesBase64, ${index})">
-                                `).join('');
-                                document.getElementById('selected-count').innerText = selectedImagesBase64.length;
-                                document.getElementById('preview-box').classList.remove('hidden');
+                                renderImagePreview();
                             }
                         };
                         img.src = e.target.result;
@@ -438,6 +432,34 @@
                     reader.readAsDataURL(file);
                 });
             }
+        }
+
+        // ฟังก์ชันเรนเดอร์รูปพรีวิว พร้อมปุ่มกากบาทลบรูป
+        function renderImagePreview() {
+            const grid = document.getElementById('preview-grid');
+            const previewBox = document.getElementById('preview-box');
+            document.getElementById('selected-count').innerText = selectedImagesBase64.length;
+
+            if (selectedImagesBase64.length === 0) {
+                previewBox.classList.add('hidden');
+                grid.innerHTML = '';
+                return;
+            }
+
+            grid.innerHTML = selectedImagesBase64.map((imgSrc, index) => `
+                <div class="relative group">
+                    <img src="${imgSrc}" class="w-full h-16 object-cover rounded-lg border border-slate-700 cursor-pointer hover:opacity-80 transition" onclick="openImageModal(selectedImagesBase64, ${index})">
+                    <button type="button" onclick="removeSelectedImage(${index})" class="absolute -top-1.5 -right-1.5 bg-rose-600 hover:bg-rose-700 text-white w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shadow-md transition">✕</button>
+                </div>
+            `).join('');
+
+            previewBox.classList.remove('hidden');
+        }
+
+        // ฟังก์ชันลบรูปที่เลือกตาม Index
+        function removeSelectedImage(index) {
+            selectedImagesBase64.splice(index, 1);
+            renderImagePreview();
         }
 
         // ฟังก์ชันเรียก Gemini API (รุ่น 3.6 Flash) ของจริงผ่าน LocalStorage API Key ส่วนตัว
