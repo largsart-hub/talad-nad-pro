@@ -148,17 +148,22 @@
                 <div id="preview-box" class="hidden space-y-3">
                     <p class="text-xs text-slate-400 font-medium">รูปภาพที่เลือก (<span id="selected-count">0</span> รูป) - <span class="text-indigo-400">คลิกรูปเพื่อดูภาพใหญ่</span>:</p>
                     <div id="preview-grid" class="grid grid-cols-4 gap-2 p-2 border border-slate-800 rounded-xl bg-slate-950 max-h-40 overflow-y-auto"></div>
+                    
+                    <!-- ปุ่มให้ AI ช่วยวิเคราะห์สินค้าและประเมินราคาอัจฉริยะ -->
+                    <button type="button" onclick="realAiAnalyze()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-2.5 rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5">
+                        ✨ ให้ AI ช่วยวิเคราะห์สินค้า & ประเมินราคาตามแบรนด์
+                    </button>
                 </div>
 
                 <div class="space-y-3 pt-2 text-xs">
                     <div>
                         <label class="block font-medium text-slate-400 mb-1">ชื่อสินค้า / แบรนด์ / รายละเอียด *</label>
-                        <input type="text" id="manual-name" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100 font-bold" placeholder="เช่น เสื้อยืด Nirvana ไซส์ L">
+                        <input type="text" id="manual-name" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100 font-bold" placeholder="เช่น เสื้อยืดวินเทจ / แบรนด์หัวแท้">
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
                             <label class="block font-medium text-slate-400 mb-1">ราคาตั้งขาย (บาท) *</label>
-                            <input type="number" id="manual-price" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-amber-400 font-bold" placeholder="150">
+                            <input type="number" id="manual-price" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-amber-400 font-bold" placeholder="89 หรือ 250">
                         </div>
                         <div>
                             <label class="block font-medium text-slate-400 mb-1">จำนวนเริ่มต้น</label>
@@ -167,7 +172,7 @@
                     </div>
                     <div>
                         <label class="block font-medium text-slate-400 mb-1">ทุน / โน๊ตเพิ่มเติม</label>
-                        <input type="text" id="manual-note" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100" placeholder="เช่น ทุน 45 บาท / สภาพดีมาก">
+                        <input type="text" id="manual-note" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100" placeholder="เช่น ทุน 25 บาท / งานแบรนด์แท้">
                     </div>
                     <button onclick="openConfirmModal('คุณต้องการบันทึกสินค้าชิ้นนี้ลงสต๊อกและ Google Sheet ใช่หรือไม่?', () => saveManualItem())" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold text-sm shadow-md transition flex items-center justify-center gap-1.5">
                         + บันทึกลงสต๊อกสินค้า
@@ -180,7 +185,7 @@
         <section id="tab-pos" class="tab-content hidden space-y-4">
             <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
                 <h2 class="font-bold text-sm text-slate-200 flex justify-between items-center">
-                    <span>🛒 POS คิดเงินหน้าร้าน (โปร 3 ตัว 200)</span>
+                    <span>🛒 POS คิดเงินหน้าร้าน</span>
                     <span id="cart-count-badge" class="bg-indigo-900 text-indigo-300 text-xs px-2.5 py-1 rounded-full font-bold">0 ชิ้น</span>
                 </h2>
                 <input type="text" id="pos-search" oninput="renderPOSStock()" placeholder="🔍 ค้นหาชื่อสินค้า..." class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-sm text-slate-100">
@@ -274,7 +279,7 @@
     </main>
 
     <script>
-        const GOOGLE_SHEET_API = "https://script.google.com/macros/s/AKfycbzCR45KDcTinTPZkrM5qkCigdYA5sQk6iP_1dKQ5nj8PySyw0Kvel0FWYyBQJmpnQHw/exec";
+        const GOOGLE_SHEET_API = "https://script.google.com/macros/s/AKfycbzOwyFRJnY1dJB3kyLlFbVEYlAAvraJXNfTPSTXRMRpAdKhsL7NQzvEZmHXIiggY1We/exec";
 
         let appData = {
             stock: JSON.parse(localStorage.getItem('market_stock_v7')) || [],
@@ -288,7 +293,6 @@
         let currentModalIndex = 0;
         let editingStockId = null;
 
-        // ดึงข้อมูลสต๊อกและรูปภาพล่าสุดจาก Google Sheet มาซิงค์อัตโนมัติ
         function fetchStockFromSheet() {
             fetch(GOOGLE_SHEET_API + "?action=getStock")
                 .then(res => res.json())
@@ -382,7 +386,6 @@
             document.getElementById('imageModal').classList.add('hidden');
         }
 
-        // ระบบบีบอัดรูปภาพให้มีขนาดเบาพิเศษ (Max 400px, Quality 0.5) เพื่อให้ส่งเก็บลง Google Sheet ได้โดยไม่ติดปัญหา Payload
         function handleImageSelect(event) {
             const files = event.target.files;
             if (files && files.length > 0) {
@@ -437,6 +440,82 @@
             }
         }
 
+        // ฟังก์ชัน AI จำลองวิเคราะห์สินค้าและประเมินราคาตามเกรดและแบรนด์
+        // ฟังก์ชันเรียก Gemini API ของจริงเพื่อวิเคราะห์รูปภาพเสื้อผ้ามือสอง
+async function realAiAnalyze() {
+    if (selectedImagesBase64.length === 0) {
+        alert("กรุณาถ่ายรูปหรือเลือกรูปสินค้าก่อนให้ AI วิเคราะห์ครับ");
+        return;
+    }
+
+    // ดึง Key จาก LocalStorage ถ้าเคยพิมพ์ไว้แล้ว จะได้ไม่ต้องพิมพ์ซ้ำ
+    let apiKey = localStorage.getItem('gemini_user_api_key');
+    
+    if (!apiKey) {
+        apiKey = prompt("กรุณากรอก Gemini API Key ของคุณ (ระบบจะจำไว้ใช้ครั้งต่อไป):");
+        if (!apiKey) return;
+        localStorage.setItem('gemini_user_api_key', apiKey.trim());
+    }
+
+    const btn = event.target;
+    const originalText = btn.innerText;
+    btn.innerText = "⏳ กำลังให้ AI วิเคราะห์ภาพ...";
+    btn.disabled = true;
+
+    try {
+        const base64Data = selectedImagesBase64[0].split(',')[1];
+        
+        const promptText = `คุณเป็นพ่อค้ามืออาชีพขายเสื้อผ้ามือสองตลาดนัดและงานแบรนด์วินเทจ ช่วยวิเคราะห์รูปสินค้าชิ้นนี้จากภาพถ่าย แล้วตอบกลับมาในรูปแบบ JSON สั้นๆ เท่านั้น ห้ามมีข้อความอื่น โดยมีโครงสร้างดังนี้:
+        {
+          "name": "ชื่อสินค้า / แบรนด์ / รายละเอียดกระชับ (เช่น เสื้อยืดวินเทจ / เสื้อเชิ้ตแบรนด์แท้)",
+          "price": ตัวเลขราคาขายเดี่ยวที่เหมาะสมเพื่อให้สินค้าออกไว (งานทั่วไปตั้ง 89-120 บาท, งานหัวแบรนด์แท้/งานวินเทจสวยๆ ตั้ง 150-350 บาทตามความเหมาะสม),
+          "cost": ตัวเลขทุนประเมินเริ่มต้น (เช่น 25 หรือ 50),
+          "note": "หมายเหตุสภาพสินค้าสั้นๆ (เช่น ทุน 25 / สภาพดี หรือ ทุน 50 / งานแบรนด์แท้)"
+        }`;
+
+        // ใช้โมเดล gemini-3.6-flash ตามที่คุณเลือก
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey.trim()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [
+                        { text: promptText },
+                        { inline_data: { mime_type: "image/jpeg", data: base64Data } }
+                    ]
+                }]
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.error) {
+            // ถ้า Key ผิดหรือหมดอายุ ให้ลบค่าเก่าทิ้งเพื่อให้กรอกใหม่
+            if (data.error.code === 400 || data.error.code === 403) {
+                localStorage.removeItem('gemini_user_api_key');
+            }
+            throw new Error(data.error.message || "API Error");
+        }
+
+        const textResult = data.candidates[0].content.parts[0].text;
+        const jsonString = textResult.replace(/```json/g, '').replace(/```/g, '').trim();
+        const resultObj = JSON.parse(jsonString);
+
+        document.getElementById('manual-name').value = resultObj.name || "";
+        document.getElementById('manual-price').value = resultObj.price || 100;
+        document.getElementById('manual-note').value = resultObj.note || "";
+
+        alert("✨ AI วิเคราะห์รูปภาพสำเร็จและประเมินราคาเรียบร้อยแล้วครับ!");
+
+    } catch (error) {
+        console.error(error);
+        alert("เกิดข้อผิดพลาด: " + error.message + "\nกรุณาตรวจสอบ API Key ของคุณอีกครั้ง");
+    } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+    }
+}
+
         function saveManualItem() {
             const name = document.getElementById('manual-name').value.trim();
             const price = parseFloat(document.getElementById('manual-price').value);
@@ -448,7 +527,7 @@
                 return;
             }
 
-            let costVal = 45;
+            let costVal = 25;
             const parsedCost = parseFloat(noteInput);
             if (!isNaN(parsedCost)) {
                 costVal = parsedCost;
