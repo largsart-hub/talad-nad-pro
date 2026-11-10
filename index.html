@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ตลาดนัด Pro - AI Vision & Sheet Pro</title>
+    <title>ตลาดนัด Pro - Stock & POS</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -107,12 +107,12 @@
     <header class="bg-slate-900 border-b border-slate-800 text-white shadow-md sticky top-0 z-40">
         <div class="max-w-xl mx-auto px-4 py-3 flex justify-between items-center">
             <h1 class="text-base font-bold flex items-center gap-2">
-                🛍️ ตลาดนัด Pro <span class="text-[10px] bg-indigo-600 px-2 py-0.5 rounded-full">Gemini AI Vision</span>
+                🛍️ ตลาดนัด Pro <span class="text-[10px] bg-indigo-600 px-2 py-0.5 rounded-full">Manual Mode</span>
             </h1>
             <div class="text-[11px] bg-emerald-900/60 text-emerald-400 border border-emerald-700/50 px-2.5 py-1 rounded-full font-medium">🔗 Sheet เชื่อมต่อแล้ว</div>
         </div>
         <nav class="flex overflow-x-auto px-2 bg-slate-900/90 py-1.5 gap-1 text-xs no-scrollbar border-t border-slate-800">
-            <button onclick="switchTab('ai-eval')" class="tab-btn px-3 py-1.5 rounded-lg bg-indigo-600 font-medium whitespace-nowrap">🤖 เพิ่ม & วิเคราะห์รูป</button>
+            <button onclick="switchTab('manual-add')" class="tab-btn px-3 py-1.5 rounded-lg bg-indigo-600 font-medium whitespace-nowrap">📸 เพิ่มสินค้า & ถ่ายรูป</button>
             <button onclick="switchTab('pos')" class="tab-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 font-medium whitespace-nowrap">🛒 POS ขายหน้าร้าน</button>
             <button onclick="switchTab('stock')" class="tab-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 font-medium whitespace-nowrap">📦 สต๊อกสินค้า</button>
             <button onclick="switchTab('expense')" class="tab-btn px-3 py-1.5 rounded-lg hover:bg-slate-800 font-medium whitespace-nowrap">💸 ค่าใช้จ่าย</button>
@@ -122,13 +122,13 @@
 
     <main class="max-w-xl mx-auto p-4 space-y-4">
 
-        <!-- TAB 1: AI EVALUATION -->
-        <section id="tab-ai-eval" class="tab-content space-y-4">
+        <!-- TAB 1: MANUAL ADD & MULTI-PHOTO -->
+        <section id="tab-manual-add" class="tab-content space-y-4">
             <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-lg space-y-4">
                 <div class="flex justify-between items-center">
-                    <h2 class="font-bold text-sm text-slate-200">📸 อัพโหลดภาพสินค้า (เลือกได้หลายรูปพร้อมกัน)</h2>
-                    <button onclick="resetAnalysisForm()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1">
-                        🔄 รีเฟรช / เริ่มใหม่
+                    <h2 class="font-bold text-sm text-slate-200">📸 ถ่ายรูป & กรอกข้อมูลสินค้าเอง</h2>
+                    <button onclick="resetManualForm()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                        🔄 เริ่มใหม่
                     </button>
                 </div>
                 
@@ -140,75 +140,36 @@
                     </label>
                     <label class="flex flex-col items-center justify-center border-2 border-dashed border-slate-700 bg-slate-800/50 p-4 rounded-xl cursor-pointer hover:bg-slate-800 transition">
                         <span class="text-2xl mb-1">🖼️</span>
-                        <span class="text-xs font-bold text-slate-300">เลือกรูปภาพ (หลายรูป)</span>
+                        <span class="text-xs font-bold text-slate-300">เลือกรูป (หลายรูป)</span>
                         <input type="file" id="gallery-input" accept="image/*" multiple class="hidden" onchange="handleImageSelect(event)">
                     </label>
                 </div>
 
                 <div id="preview-box" class="hidden space-y-3">
-                    <p class="text-xs text-slate-400 font-medium">รูปภาพที่เลือก (<span id="selected-count">0</span> รูป) - <span class="text-indigo-400">คลิกที่รูปเพื่อดูภาพใหญ่</span>:</p>
+                    <p class="text-xs text-slate-400 font-medium">รูปภาพที่เลือก (<span id="selected-count">0</span> รูป) - <span class="text-indigo-400">คลิกรูปเพื่อดูภาพใหญ่</span>:</p>
                     <div id="preview-grid" class="grid grid-cols-4 gap-2 p-2 border border-slate-800 rounded-xl bg-slate-950 max-h-40 overflow-y-auto"></div>
-                    <button onclick="runMarketAnalysis()" id="analyze-btn" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white py-3 rounded-xl font-bold text-sm shadow-md transition">
-                        ✨ ส่งภาพทั้งหมดให้ Gemini AI วิเคราะห์ตลาด
-                    </button>
-                </div>
-            </div>
-
-            <div id="batch-progress" class="hidden bg-slate-900 border border-slate-800 rounded-2xl p-4 text-center space-y-2">
-                <div class="animate-spin text-2xl inline-block">⏳</div>
-                <h3 id="batch-status-text" class="text-sm font-bold text-indigo-400">กำลังประมวลผลภาพ...</h3>
-            </div>
-
-            <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-4 shadow-xl">
-                <div class="flex justify-between items-center border-b border-slate-800 pb-2">
-                    <h3 class="font-bold text-sm text-slate-200 flex items-center gap-1.5">
-                        🔍 ผลวิเคราะห์ตลาด
-                    </h3>
-                    <span id="analysis-status-badge" class="text-[10px] bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full font-medium">รอวิเคราะห์</span>
                 </div>
 
-                <div class="bg-slate-950 border border-slate-800 p-3.5 rounded-xl space-y-2 text-xs">
-                    <p class="text-slate-400">ชื่อสินค้าและสเปกที่ AI ระบุ:</p>
-                    <h4 id="ai-title" class="font-bold text-slate-100 text-sm">ยังไม่มีข้อมูล (กรุณากดวิเคราะห์)</h4>
-                    <div class="border-t border-slate-800/80 pt-2 space-y-1 text-slate-300">
-                        <p>แบรนด์/ป้าย: <span id="ai-brand" class="text-slate-100 font-medium">-</span></p>
-                        <p>เนื้อผ้า/ซับใน: <span id="ai-material" class="text-slate-100 font-medium">-</span></p>
-                        <p>จุดเด่น: <span id="ai-highlight" class="text-slate-100 font-medium">-</span></p>
-                        <p>ตำหนิ: <span id="ai-defect" class="text-slate-100 font-medium">-</span></p>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-3 gap-2 bg-slate-950/60 border border-slate-800 p-3 rounded-xl text-center">
+                <div class="space-y-3 pt-2 text-xs">
                     <div>
-                        <p class="text-[10px] text-slate-400">ราคาขายแนะนำ</p>
-                        <p id="ai-sell-price" class="font-bold text-amber-400 text-sm mt-0.5">0 ฿</p>
+                        <label class="block font-medium text-slate-400 mb-1">ชื่อสินค้า / แบรนด์ / รายละเอียด *</label>
+                        <input type="text" id="manual-name" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100 font-bold" placeholder="เช่น เสื้อยืด Nirvana ไซส์ L">
                     </div>
-                    <div>
-                        <p class="text-[10px] text-slate-400">ราคาประมูล</p>
-                        <p id="ai-bid-price" class="font-bold text-blue-400 text-sm mt-0.5">0 ฿</p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] text-slate-400">กำไรคาดการณ์</p>
-                        <p id="ai-profit" class="font-bold text-emerald-400 text-sm mt-0.5">0 ฿</p>
-                    </div>
-                </div>
-
-                <div class="space-y-3 pt-1 text-xs">
                     <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="block font-medium text-slate-400 mb-1">ราคาตั้งขาย (บาท)</label>
-                            <input type="number" id="custom-sell-price" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100 font-bold" placeholder="150">
+                            <label class="block font-medium text-slate-400 mb-1">ราคาตั้งขาย (บาท) *</label>
+                            <input type="number" id="manual-price" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-amber-400 font-bold" placeholder="150">
                         </div>
                         <div>
                             <label class="block font-medium text-slate-400 mb-1">จำนวนเริ่มต้น</label>
-                            <input type="number" id="custom-qty" min="1" value="1" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100 font-bold">
+                            <input type="number" id="manual-qty" min="1" value="1" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100 font-bold">
                         </div>
                     </div>
                     <div>
-                        <label class="block font-medium text-slate-400 mb-1">บันทึกโน๊ตเพิ่มเติม</label>
-                        <input type="text" id="custom-note" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100" placeholder="เช่น ไซส์ L / อก 22">
+                        <label class="block font-medium text-slate-400 mb-1">ทุน / โน๊ตเพิ่มเติม</label>
+                        <input type="text" id="manual-note" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-slate-100" placeholder="เช่น ทุน 45 บาท / สภาพดีมาก">
                     </div>
-                    <button onclick="openConfirmModal('คุณต้องการบันทึกสินค้าชิ้นนี้ลงสต๊อกและ Google Sheet ใช่หรือไม่?', () => saveCurrentAnalyzedItem())" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold text-sm shadow-md transition flex items-center justify-center gap-1.5">
+                    <button onclick="openConfirmModal('คุณต้องการบันทึกสินค้าชิ้นนี้ลงสต๊อกและ Google Sheet ใช่หรือไม่?', () => saveManualItem())" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold text-sm shadow-md transition flex items-center justify-center gap-1.5">
                         + บันทึกลงสต๊อกสินค้า
                     </button>
                 </div>
@@ -226,7 +187,7 @@
                 
                 <div class="bg-indigo-950/40 p-3 rounded-xl border border-indigo-900/50 space-y-2">
                     <div class="flex justify-between text-xs text-slate-300">
-                        <span id="applied-promo">เรตราคาปกติ / ราคาหน้างาน</span>
+                        <span>ยอดรวมตะกร้า</span>
                         <span id="cart-total" class="font-bold text-emerald-400 text-base">0 ฿</span>
                     </div>
                     <div id="cart-items-summary" class="text-xs text-slate-400 max-h-36 overflow-y-auto space-y-1.5">ยังไม่ได้เลือกสินค้า</div>
@@ -244,7 +205,7 @@
             <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl space-y-3">
                 <div class="flex justify-between items-center">
                     <h2 class="font-bold text-sm text-slate-200">📦 คลังสินค้าทั้งหมด</h2>
-                    <button onclick="switchTab('ai-eval')" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+ เพิ่มสินค้า</button>
+                    <button onclick="switchTab('manual-add')" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold">+ เพิ่มสินค้า</button>
                 </div>
                 <div id="stock-list" class="space-y-2 max-h-[420px] overflow-y-auto"></div>
             </div>
@@ -313,8 +274,7 @@
     </main>
 
     <script>
-        const GOOGLE_SHEET_API = "https://script.google.com/macros/s/AKfycbyL7pUrTMxUg9009hZ2HjQV0YP_S52kYyVv1tdf1A7CRD2uonuVrGcm6FdGEaMpglrb/exec";
-        const GEMINI_WEB_KEY = "AQ.Ab8RN6JoDhyfTC-ymi3mnNXsZJnyAxEuZfIsCqcsL9yu2BFfog";
+        const GOOGLE_SHEET_API = "https://script.google.com/macros/s/AKfycbzCR45KDcTinTPZkrM5qkCigdYA5sQk6iP_1dKQ5nj8PySyw0Kvel0FWYyBQJmpnQHw/exec";
 
         let appData = {
             stock: JSON.parse(localStorage.getItem('market_stock_v7')) || [],
@@ -326,9 +286,29 @@
         let selectedImagesBase64 = [];
         let currentModalImages = [];
         let currentModalIndex = 0;
-        let currentAnalysisResult = null;
-        let activeImageForSave = "";
         let editingStockId = null;
+
+        // ดึงข้อมูลสต๊อกและรูปภาพล่าสุดจาก Google Sheet มาซิงค์อัตโนมัติ
+        function fetchStockFromSheet() {
+            fetch(GOOGLE_SHEET_API + "?action=getStock")
+                .then(res => res.json())
+                .then(data => {
+                    if (data && data.status === "success" && Array.isArray(data.stock)) {
+                        appData.stock = data.stock;
+                        localStorage.setItem('market_stock_v7', JSON.stringify(appData.stock));
+                        renderDashboard();
+                        renderStock();
+                        if (!document.getElementById('tab-pos').classList.contains('hidden')) {
+                            renderPOSStock();
+                        }
+                    }
+                })
+                .catch(err => console.log("Fetch stock error:", err));
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            fetchStockFromSheet();
+        });
 
         function openConfirmModal(message, onConfirmCallback) {
             document.getElementById('confirm-modal-text').innerText = message;
@@ -353,36 +333,28 @@
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('bg-indigo-600'));
             document.getElementById('tab-' + tabId).classList.remove('hidden');
             event.currentTarget.classList.add('bg-indigo-600');
+            
+            fetchStockFromSheet();
+
             renderDashboard();
             if(tabId === 'pos') renderPOSStock();
         }
 
-        function resetAnalysisForm() {
+        function resetManualForm() {
             selectedImagesBase64 = [];
-            currentAnalysisResult = null;
-            activeImageForSave = "";
             document.getElementById('preview-box').classList.add('hidden');
             document.getElementById('preview-grid').innerHTML = '';
             document.getElementById('selected-count').innerText = '0';
             document.getElementById('camera-input').value = '';
             document.getElementById('gallery-input').value = '';
-
-            document.getElementById('ai-title').innerText = "ยังไม่มีข้อมูล (กรุณากดวิเคราะห์)";
-            document.getElementById('ai-brand').innerText = "-";
-            document.getElementById('ai-material').innerText = "-";
-            document.getElementById('ai-highlight').innerText = "-";
-            document.getElementById('ai-defect').innerText = "-";
-            document.getElementById('ai-sell-price').innerText = "0 ฿";
-            document.getElementById('ai-bid-price').innerText = "0 ฿";
-            document.getElementById('ai-profit').innerText = "0 ฿";
-            document.getElementById('custom-sell-price').value = "";
-            document.getElementById('custom-qty').value = "1";
-            document.getElementById('custom-note').value = "";
-            document.getElementById('analysis-status-badge').innerText = "รอวิเคราะห์";
+            document.getElementById('manual-name').value = '';
+            document.getElementById('manual-price').value = '';
+            document.getElementById('manual-qty').value = '1';
+            document.getElementById('manual-note').value = '';
         }
 
         function openImageModal(imgSrcs, index = 0) {
-            currentModalImages = Array.isArray(imgSrcs) ? imgSrcs : [imgSrcs];
+            currentModalImages = Array.isArray(imgSrcs) ? imgSrcs : (imgSrcs ? imgSrcs.split('||') : ['https://via.placeholder.com/150']);
             currentModalIndex = index;
             updateModalImage();
             document.getElementById('imageModal').classList.remove('hidden');
@@ -410,112 +382,90 @@
             document.getElementById('imageModal').classList.add('hidden');
         }
 
+        // ระบบบีบอัดรูปภาพให้มีขนาดเบาพิเศษ (Max 400px, Quality 0.5) เพื่อให้ส่งเก็บลง Google Sheet ได้โดยไม่ติดปัญหา Payload
         function handleImageSelect(event) {
             const files = event.target.files;
             if (files && files.length > 0) {
-                selectedImagesBase64 = [];
                 const grid = document.getElementById('preview-grid');
-                grid.innerHTML = '';
-                
                 let processedCount = 0;
-                Array.from(files).forEach((file, index) => {
+                
+                Array.from(files).forEach((file) => {
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        selectedImagesBase64.push(e.target.result);
-                        grid.innerHTML += `<img src="${e.target.result}" class="w-full h-16 object-cover rounded-lg border border-slate-700 cursor-pointer" onclick="openImageModal(selectedImagesBase64, ${index})">`;
-                        processedCount++;
-                        document.getElementById('selected-count').innerText = selectedImagesBase64.length;
-                        if(processedCount === files.length) {
-                            document.getElementById('preview-box').classList.remove('hidden');
-                        }
+                        const img = new Image();
+                        img.onload = function() {
+                            const MAX_WIDTH = 400;
+                            const MAX_HEIGHT = 400;
+                            let width = img.width;
+                            let height = img.height;
+
+                            if (width > height) {
+                                if (width > MAX_WIDTH) {
+                                    height *= MAX_WIDTH / width;
+                                    width = MAX_WIDTH;
+                                }
+                            } else {
+                                if (height > MAX_HEIGHT) {
+                                    width *= MAX_HEIGHT / height;
+                                    height = MAX_HEIGHT;
+                                }
+                            }
+
+                            const canvas = document.createElement('canvas');
+                            canvas.width = width;
+                            canvas.height = height;
+                            const ctx = canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0, width, height);
+
+                            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
+
+                            selectedImagesBase64.push(compressedBase64);
+                            processedCount++;
+                            
+                            if (processedCount === files.length) {
+                                grid.innerHTML = selectedImagesBase64.map((imgSrc, index) => `
+                                    <img src="${imgSrc}" class="w-full h-16 object-cover rounded-lg border border-slate-700 cursor-pointer hover:opacity-80 transition" onclick="openImageModal(selectedImagesBase64, ${index})">
+                                `).join('');
+                                document.getElementById('selected-count').innerText = selectedImagesBase64.length;
+                                document.getElementById('preview-box').classList.remove('hidden');
+                            }
+                        };
+                        img.src = e.target.result;
                     }
                     reader.readAsDataURL(file);
                 });
             }
         }
 
-        async function runMarketAnalysis() {
-            if (selectedImagesBase64.length === 0) {
-                alert("กรุณาเลือกรูปภาพสินค้าก่อนครับ");
+        function saveManualItem() {
+            const name = document.getElementById('manual-name').value.trim();
+            const price = parseFloat(document.getElementById('manual-price').value);
+            const qty = parseInt(document.getElementById('manual-qty').value) || 1;
+            const noteInput = document.getElementById('manual-note').value.trim();
+
+            if (!name || isNaN(price)) {
+                alert("กรุณากรอกชื่อสินค้าและราคาขายให้ครบถ้วนครับ");
                 return;
             }
 
-            document.getElementById('batch-progress').classList.remove('hidden');
-            document.getElementById('analysis-status-badge').innerText = "กำลังวิเคราะห์...";
-
-            const targetImage = selectedImagesBase64[0];
-            activeImageForSave = targetImage;
-            const base64Data = targetImage.split(',')[1];
-            const mimeType = targetImage.substring(targetImage.indexOf(":") + 1, targetImage.indexOf(";"));
-
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${GEMINI_WEB_KEY}`;
-            const promptText = 'คุณคือผู้เชี่ยวชาญด้านการประเมินสินค้ามือสอง จงวิเคราะห์ภาพนี้แล้วตอบกลับเป็น JSON บริสุทธิ์เท่านั้น ห้ามมี markdown หรือข้อความอื่น โดยมีโครงสร้าง: {"title": "ชื่อสินค้า", "brand": "แบรนด์", "material": "เนื้อผ้า", "highlight": "จุดเด่น", "defect": "ตำหนิ", "sellPrice": 150, "bidPrice": 70, "profit": "+105 ฿ (233%)"}';
-
-            const payload = {
-                contents: [{ parts: [{ text: promptText }, { inline_data: { mime_type: mimeType, data: base64Data } }] }]
-            };
-
-            try {
-                const response = await fetch(url, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
-                });
-
-                const json = await response.json();
-                if (json.candidates && json.candidates[0].content) {
-                    let text = json.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim();
-                    const firstBrace = text.indexOf("{");
-                    const lastBrace = text.lastIndexOf("}");
-                    if (firstBrace !== -1 && lastBrace !== -1) {
-                        text = text.substring(firstBrace, lastBrace + 1);
-                    }
-                    const ai = JSON.parse(text);
-                    currentAnalysisResult = ai;
-
-                    document.getElementById('ai-title').innerText = ai.title || "เสื้อผ้ามือสอง";
-                    document.getElementById('ai-brand').innerText = ai.brand || "-";
-                    document.getElementById('ai-material').innerText = ai.material || "-";
-                    document.getElementById('ai-highlight').innerText = ai.highlight || "-";
-                    document.getElementById('ai-defect').innerText = ai.defect || "ไม่มีตำหนิเด่นชัด";
-                    document.getElementById('ai-sell-price').innerText = (ai.sellPrice || 150) + " ฿";
-                    document.getElementById('ai-bid-price').innerText = (ai.bidPrice || 70) + " ฿";
-                    document.getElementById('ai-profit').innerText = ai.profit || "+105 ฿ (233%)";
-
-                    document.getElementById('custom-sell-price').value = ai.sellPrice || 150;
-                    document.getElementById('analysis-status-badge').innerText = "วิเคราะห์สำเร็จเรียบร้อย";
-                } else {
-                    throw new Error("AI Response error");
-                }
-            } catch (err) {
-                console.error(err);
-                alert("⚠️ ไม่สามารถวิเคราะห์รูปภาพได้ กรุณาลองใหม่อีกครั้ง");
-                document.getElementById('analysis-status-badge').innerText = "เกิดข้อผิดพลาด";
+            let costVal = 45;
+            const parsedCost = parseFloat(noteInput);
+            if (!isNaN(parsedCost)) {
+                costVal = parsedCost;
             }
 
-            document.getElementById('batch-progress').classList.add('hidden');
-        }
-
-        function saveCurrentAnalyzedItem() {
-            if (!currentAnalysisResult) {
-                alert("กรุณากดวิเคราะห์รูปภาพสินค้าก่อนบันทึกครับ");
-                return;
-            }
-
-            const customPrice = parseFloat(document.getElementById('custom-sell-price').value) || currentAnalysisResult.sellPrice || 150;
-            const customQty = parseInt(document.getElementById('custom-qty').value) || 1;
-            const customNote = document.getElementById('custom-note').value;
-            const finalName = `${currentAnalysisResult.title || 'เสื้อผ้ามือสอง'} ${customNote ? '(' + customNote + ')' : ''}`;
+            const finalName = `${name} ${noteInput && isNaN(parsedCost) ? '(' + noteInput + ')' : ''}`;
+            const allImagesJoined = selectedImagesBase64.length > 0 ? selectedImagesBase64.join('||') : 'https://via.placeholder.com/150';
 
             const newItem = {
                 id: 'ID_' + Date.now().toString().slice(-6) + Math.floor(Math.random() * 900 + 100),
                 name: finalName,
-                cost: 45,
-                price: customPrice,
-                qty: customQty,
+                cost: costVal,
+                price: price,
+                qty: qty,
                 status: '🟢 พร้อมขาย (In Stock)',
                 date: new Date().toISOString().slice(0, 10),
-                image: activeImageForSave
+                image: allImagesJoined
             };
 
             appData.stock.push(newItem);
@@ -525,9 +475,9 @@
                 method: "POST",
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify({ action: "addStock", ...newItem })
-            }).catch(err => console.log(err));
+            }).then(() => fetchStockFromSheet()).catch(err => console.log(err));
 
-            resetAnalysisForm();
+            resetManualForm();
             switchTab('stock');
         }
 
@@ -563,7 +513,7 @@
                     method: "POST",
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ action: "updateStockQty", id: item.id, qty: newQty, status: newStatus })
-                }).catch(err => console.log(err));
+                }).then(() => fetchStockFromSheet()).catch(err => console.log(err));
 
                 closeEditModal();
                 renderDashboard();
@@ -571,7 +521,7 @@
         }
 
         function deleteStockItem(id) {
-            openConfirmModal("คุณต้องการลบสินค้ารายการนี้ออกจากสต๊อกใช่หรือไม่? (ยอดขายจะถูกปรับลดตามรายการที่ลบ)", () => {
+            openConfirmModal("คุณต้องการลบสินค้ารายการนี้ออกจากสต๊อกใช่หรือไม่?", () => {
                 appData.stock = appData.stock.filter(i => i.id !== id);
                 localStorage.setItem('market_stock_v7', JSON.stringify(appData.stock));
 
@@ -579,7 +529,7 @@
                     method: "POST",
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ action: "deleteStock", id: id })
-                }).catch(err => console.log(err));
+                }).then(() => fetchStockFromSheet()).catch(err => console.log(err));
 
                 renderDashboard();
             });
@@ -588,11 +538,8 @@
         function renderStock() {
             const list = document.getElementById('stock-list');
             if (appData.stock.length === 0) { list.innerHTML = '<p class="text-slate-500 text-center text-xs py-4">ไม่มีสินค้าในสต๊อก</p>'; return; }
-            
-            const allImages = appData.stock.map(i => i.image);
 
-            list.innerHTML = appData.stock.map((item, index) => {
-                // เช็คว่าถ้ามีการขายจริงและราคาขายจริงไม่เท่ากับราคาตั้งต้น ให้แสดงทั้งสองราคา
+            list.innerHTML = appData.stock.map((item) => {
                 let priceDisplay = `ขาย: ${item.price} ฿`;
                 if (item.soldPrice !== undefined && item.soldPrice !== item.price) {
                     priceDisplay = `ตั้งขาย: <span class="line-through text-slate-500">${item.price} ฿</span> | ขายจริง: <span class="text-amber-400 font-bold">${item.soldPrice} ฿</span>`;
@@ -600,10 +547,12 @@
                     priceDisplay = `ขายจริง: <span class="text-amber-400 font-bold">${item.soldPrice} ฿</span>`;
                 }
 
+                const firstImg = item.image ? item.image.split('||')[0] : 'https://via.placeholder.com/150';
+
                 return `
                     <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800 text-xs">
                         <div class="flex items-center gap-2.5">
-                            <img src="${item.image}" class="w-11 h-11 object-cover rounded-lg border border-slate-800 cursor-pointer hover:opacity-80 transition" onclick="openImageModal(allImages, ${index})">
+                            <img src="${firstImg}" class="w-11 h-11 object-cover rounded-lg border border-slate-800 cursor-pointer hover:opacity-80 transition" onclick="openImageModal('${item.image}')">
                             <div>
                                 <div class="font-bold text-slate-200">${item.name}</div>
                                 <div class="text-slate-400">ทุน: ${item.cost} ฿ | ${priceDisplay} | จำนวน: <span class="text-indigo-400 font-bold">${item.qty || 1}</span> ชิ้น</div>
@@ -629,14 +578,16 @@
                 return;
             }
 
-            const allImages = available.map(i => i.image);
-            grid.innerHTML = available.map((item, index) => `
-                <div onclick="addToCart('${item.id}')" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex flex-col items-center cursor-pointer hover:border-indigo-500 transition shadow-xs">
-                    <img src="${item.image}" class="w-14 h-14 object-cover rounded-lg mb-1.5 border border-slate-800 cursor-pointer" onclick="event.stopPropagation(); openImageModal(allImages, ${index})">
-                    <span class="font-medium text-xs text-slate-200 text-center truncate w-full">${item.name}</span>
-                    <span class="text-indigo-400 font-bold text-xs mt-1">${item.price} ฿ (คงเหลือ: ${item.qty || 1})</span>
-                </div>
-            `).join('');
+            grid.innerHTML = available.map((item) => {
+                const firstImg = item.image ? item.image.split('||')[0] : 'https://via.placeholder.com/150';
+                return `
+                    <div onclick="addToCart('${item.id}')" class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 flex flex-col items-center cursor-pointer hover:border-indigo-500 transition shadow-xs">
+                        <img src="${firstImg}" class="w-14 h-14 object-cover rounded-lg mb-1.5 border border-slate-800 cursor-pointer" onclick="event.stopPropagation(); openImageModal('${item.image}')">
+                        <span class="font-medium text-xs text-slate-200 text-center truncate w-full">${item.name}</span>
+                        <span class="text-indigo-400 font-bold text-xs mt-1">${item.price} ฿ (คงเหลือ: ${item.qty || 1})</span>
+                    </div>
+                `;
+            }).join('');
         }
 
         function addToCart(id) {
@@ -707,7 +658,6 @@
         function checkoutCart() {
             if (appData.cart.length === 0) { alert("ตะกร้าว่างเปล่า"); return; }
 
-            // บันทึกราคาขายจริงที่ลดหน้างานลงไปที่ตัวสินค้าและส่งไป Google Sheet
             appData.cart.forEach(cartItem => {
                 const stockItem = appData.stock.find(i => i.id === cartItem.id);
                 if (stockItem) {
@@ -729,7 +679,6 @@
                 }
             });
 
-            // ส่งข้อมูลยอดขายรวมไปยังแท็บ Sales (ช่อง C จะบันทึกยอดเงินจริงที่ขายได้ทันที)
             let totalSaleAmount = appData.cart.reduce((sum, i) => sum + (i.customCartPrice !== undefined ? i.customCartPrice : i.price), 0);
             const saleRecord = {
                 action: "addSale",
@@ -742,14 +691,14 @@
                 method: "POST",
                 headers: { "Content-Type": "text/plain;charset=utf-8" },
                 body: JSON.stringify(saleRecord)
-            }).catch(err => console.log(err));
+            }).then(() => fetchStockFromSheet()).catch(err => console.log(err));
 
             appData.cart = [];
             localStorage.setItem('market_stock_v7', JSON.stringify(appData.stock));
             renderPOSStock();
             renderCart();
             renderDashboard();
-            alert("💰 บันทึกการขายด้วย 'ราคาขายจริง' และส่งยอดเข้า Google Sheet สำเร็จ!");
+            alert("💰 บันทึกการขายและส่งยอดเข้า Google Sheet สำเร็จ!");
         }
 
         function handleExpenseSubmit(e) {
@@ -852,7 +801,7 @@
                     return `
                         <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
                             <div>
-                                <span class="text-slate-300 font-medium">${ex.date} - ${ex.type}</span>
+                                <span class="text-slate-300 font-medium">${ex.date} | ${ex.type}</span>
                                 <div class="text-rose-400 font-bold">${ex.amount.toLocaleString()} ฿</div>
                             </div>
                             <div class="flex gap-1.5">
