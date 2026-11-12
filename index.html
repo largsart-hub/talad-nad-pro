@@ -147,10 +147,8 @@
 
                 <div id="preview-box" class="hidden space-y-3">
                     <p class="text-xs text-slate-400 font-medium">รูปภาพที่เลือก (<span id="selected-count">0</span> รูป) - <span class="text-indigo-400">คลิกรูปเพื่อดูภาพใหญ่ / กด ✕ เพื่อลบรูป</span>:</p>
-                    <!-- ช่องแสดงพรีวิวพร้อมปุ่มกากบาทลบรูป -->
                     <div id="preview-grid" class="grid grid-cols-4 gap-2 p-2 border border-slate-800 rounded-xl bg-slate-950 max-h-40 overflow-y-auto"></div>
                     
-                    <!-- ปุ่มให้ AI (Gemini 3.6 Flash) ของจริงช่วยวิเคราะห์สินค้า -->
                     <button type="button" onclick="realAiAnalyze()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white py-2.5 rounded-xl font-bold text-xs shadow-md transition flex items-center justify-center gap-1.5">
                         ✨ ให้ AI (3.6 Flash) วิเคราะห์สินค้า & ประเมินราคา
                     </button>
@@ -280,7 +278,7 @@
     </main>
 
     <script>
-        const GOOGLE_SHEET_API = "https://script.google.com/macros/s/AKfycbxZ0901dZQ0_-8UUmpyQH3EwnVXweGyjJJobf-ddH446PD2SlxNjHG51bUhygiNaKu8/exec";
+        const GOOGLE_SHEET_API = "https://script.google.com/macros/s/AKfycbxItoo4ujgyYGcGwdp3K8itDoUyiXzqG0Jks0vWmD6z81np5HwFi9WzPfe_eQB7zYOl/exec";
 
         let appData = {
             stock: JSON.parse(localStorage.getItem('market_stock_v7')) || [],
@@ -311,8 +309,36 @@
                 .catch(err => console.log("Fetch stock error:", err));
         }
 
+        function fetchExpensesFromSheet() {
+    fetch(GOOGLE_SHEET_API + "?action=getExpenses")
+        .then(res => res.json())
+        .then(data => {
+            if (data && data.status === "success" && Array.isArray(data.expenses)) {
+                // แปลงรูปแบบวันที่ให้แสดงผลเป็น YYYY-MM-DD เสมอ
+                appData.expenses = data.expenses.map(ex => {
+                    let cleanDate = ex.date;
+                    if (cleanDate.includes('GMT') || !isNaN(Date.parse(cleanDate))) {
+                        const d = new Date(cleanDate);
+                        if (!isNaN(d.getTime())) {
+                            const year = d.getFullYear();
+                            const month = String(d.getMonth() + 1).padStart(2, '0');
+                            const day = String(d.getDate()).padStart(2, '0');
+                            cleanDate = `${year}-${month}-${day}`;
+                        }
+                    }
+                    return { ...ex, date: cleanDate };
+                });
+
+                localStorage.setItem('market_expenses_v7', JSON.stringify(appData.expenses));
+                renderDashboard();
+            }
+        })
+        .catch(err => console.log("Fetch expenses error:", err));
+}
+
         window.addEventListener('DOMContentLoaded', () => {
             fetchStockFromSheet();
+            fetchExpensesFromSheet();
         });
 
         function openConfirmModal(message, onConfirmCallback) {
@@ -340,6 +366,7 @@
             event.currentTarget.classList.add('bg-indigo-600');
             
             fetchStockFromSheet();
+            fetchExpensesFromSheet();
 
             renderDashboard();
             if(tabId === 'pos') renderPOSStock();
@@ -434,7 +461,7 @@
             }
         }
 
-        // ฟังก์ชันเรนเดอร์รูปพรีวิว พร้อมปุ่มกากบาทลบรูป
+        // ฟังก์ชันพรีวิวภาพ พร้อมปุ่มกากบาทลบรูป
         function renderImagePreview() {
             const grid = document.getElementById('preview-grid');
             const previewBox = document.getElementById('preview-box');
@@ -456,13 +483,12 @@
             previewBox.classList.remove('hidden');
         }
 
-        // ฟังก์ชันลบรูปที่เลือกตาม Index
         function removeSelectedImage(index) {
             selectedImagesBase64.splice(index, 1);
             renderImagePreview();
         }
 
-        // ฟังก์ชันเรียก Gemini API (รุ่น 3.6 Flash) ของจริงผ่าน LocalStorage API Key ส่วนตัว
+        // ฟังก์ชันเรียก Gemini API (3.6 Flash) ของจริง
         async function realAiAnalyze() {
             if (selectedImagesBase64.length === 0) {
                 alert("กรุณาถ่ายรูปหรือเลือกรูปสินค้าก่อนให้ AI วิเคราะห์ครับ");
@@ -775,20 +801,6 @@
                 }
             });
 
-            let totalSaleAmount = appData.cart.reduce((sum, i) => sum + (i.customCartPrice !== undefined ? i.customCartPrice : i.price), 0);
-            const saleRecord = {
-                action: "addSale",
-                date: new Date().toISOString().slice(0, 10),
-                items: appData.cart.map(i => `${i.name} (${i.customCartPrice !== undefined ? i.customCartPrice : i.price}฿)`).join(', '),
-                amount: totalSaleAmount
-            };
-
-            fetch(GOOGLE_SHEET_API, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify(saleRecord)
-            }).then(() => fetchStockFromSheet()).catch(err => console.log(err));
-
             appData.cart = [];
             localStorage.setItem('market_stock_v7', JSON.stringify(appData.stock));
             renderPOSStock();
@@ -813,7 +825,7 @@
                     method: "POST",
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify(expenseData)
-                }).catch(err => console.log(err));
+                }).then(() => fetchExpensesFromSheet()).catch(err => console.log(err));
 
                 e.target.reset();
                 document.getElementById('expense-date').valueAsDate = new Date();
@@ -850,7 +862,7 @@
                     method: "POST",
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ action: "syncAllExpenses", expenses: appData.expenses })
-                }).catch(err => console.log(err));
+                }).then(() => fetchExpensesFromSheet()).catch(err => console.log(err));
 
                 closeEditExpenseModal();
                 renderDashboard();
@@ -866,7 +878,7 @@
                     method: "POST",
                     headers: { "Content-Type": "text/plain;charset=utf-8" },
                     body: JSON.stringify({ action: "syncAllExpenses", expenses: appData.expenses })
-                }).catch(err => console.log(err));
+                }).then(() => fetchExpensesFromSheet()).catch(err => console.log(err));
 
                 renderDashboard();
             });
