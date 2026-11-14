@@ -61,17 +61,25 @@
         </div>
     </div>
 
-    <!-- Modal ขายด่วนทันทีเมื่อคลิกสินค้าในหน้า POS -->
+    <!-- Modal ขายด่วนทันทีเมื่อคลิกสินค้าในหน้า POS (รองรับเลือกจำนวนชิ้น) -->
     <div id="quickSellModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white border-2 border-pink-300 p-6 rounded-[2.5rem] max-w-sm w-full space-y-4 shadow-2xl text-center" onclick="event.stopPropagation()">
             <div class="text-3xl">🛍️</div>
             <h3 class="font-bold text-base text-pink-600">ยืนยันการขายสินค้านี้</h3>
             <div id="quick-sell-name" class="text-xs text-slate-700 font-bold bg-pink-50 p-3 rounded-2xl border border-pink-200"></div>
             <input type="hidden" id="quick-sell-id">
-            <div class="text-left">
-                <label class="block text-xs font-medium text-slate-600 mb-1">ราคาขายจริง (บาท) <span class="text-[10px] text-pink-500">(ลดราคา/ต่อรองได้)</span></label>
-                <input type="number" id="quick-sell-price-input" class="w-full bg-pink-50/50 border border-pink-300 rounded-2xl p-3 text-xl text-rose-600 font-bold outline-none focus:border-pink-500 text-center">
+            
+            <div class="grid grid-cols-2 gap-3 text-left">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">ราคาขายต่อหน่วย</label>
+                    <input type="number" id="quick-sell-price-input" class="w-full bg-pink-50/50 border border-pink-300 rounded-2xl p-3 text-base text-rose-600 font-bold outline-none focus:border-pink-500 text-center">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">จำนวนที่ขาย (ชิ้น)</label>
+                    <input type="number" id="quick-sell-qty-input" min="1" value="1" class="w-full bg-pink-50/50 border border-pink-300 rounded-2xl p-3 text-base text-pink-600 font-bold outline-none focus:border-pink-500 text-center">
+                </div>
             </div>
+
             <div class="flex gap-2 pt-2">
                 <button onclick="confirmQuickSell()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white py-3 rounded-2xl font-bold text-xs transition shadow-lg shadow-emerald-200">💰 ขายทันที & ตัดสต๊อก</button>
                 <button onclick="closeQuickSellModal()" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-600 py-3 rounded-2xl font-bold text-xs transition">ยกเลิก</button>
@@ -311,7 +319,7 @@
     </main>
 
     <script>
-        const GOOGLE_SHEET_API = "https://script.google.com/macros/s/AKfycbz-XzlfIiTwGBH4RCX1tPEfVOl9XX7VlbObY8brW9DLVFu8i6kebD30XPsDkLzqxxuj/exec";
+        const GOOGLE_SHEET_API = "https://script.google.com/macros/s/AKfycbxWQ-OGwiy6BFbTvx4ZiqT0dqyEsueJpHj0G4XtfMKcLe-obye4b3eZLg_JyLUsLeny/exec";
 
         let appData = {
             stock: JSON.parse(localStorage.getItem('market_stock_v7')) || [],
@@ -368,7 +376,6 @@
                 .then(data => {
                     let salesList = [];
                     if (data && data.status === "success" && Array.isArray(data.sales)) {
-                        let seen = new Set();
                         data.sales.forEach(sale => {
                             let cleanDate = sale.date;
                             if (cleanDate.includes('GMT') || !isNaN(Date.parse(cleanDate))) {
@@ -379,12 +386,7 @@
                             } else if (cleanDate.length > 10) {
                                 cleanDate = cleanDate.slice(0, 10);
                             }
-
-                            let uniqueKey = cleanDate + "_" + sale.items;
-                            if (!seen.has(uniqueKey)) {
-                                seen.add(uniqueKey);
-                                salesList.push({ ...sale, date: cleanDate });
-                            }
+                            salesList.push({ ...sale, date: cleanDate });
                         });
                     }
                     appData.sales = salesList;
@@ -659,14 +661,22 @@
             appData.stock.push(newItem);
             localStorage.setItem('market_stock_v7', JSON.stringify(appData.stock));
 
-            fetch(GOOGLE_SHEET_API, {
-                method: "POST",
-                headers: { "Content-Type": "text/plain;charset=utf-8" },
-                body: JSON.stringify({ action: "addStock", ...newItem })
-            }).then(() => fetchStockFromSheet()).catch(err => console.log(err));
+            const params = new URLSearchParams({
+                action: "addStock",
+                id: newItem.id,
+                name: newItem.name,
+                cost: newItem.cost,
+                price: newItem.price,
+                qty: newItem.qty,
+                status: newItem.status,
+                date: newItem.date,
+                image: newItem.image
+            });
+            new Image().src = GOOGLE_SHEET_API + "?" + params.toString();
 
             resetManualForm();
             switchTab('stock');
+            setTimeout(() => fetchStockFromSheet(), 1500);
         }
 
         function openEditStockModal(id) {
@@ -712,18 +722,15 @@
                 renderDashboard();
                 renderStock();
 
-                fetch(GOOGLE_SHEET_API, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ 
-                        action: "updateStockItem", 
-                        id: item.id, 
-                        name: newName, 
-                        price: newPrice, 
-                        qty: newQty, 
-                        status: newStatus 
-                    })
-                }).catch(err => console.log(err));
+                const params = new URLSearchParams({
+                    action: "updateStockItem",
+                    id: item.id,
+                    name: newName,
+                    price: newPrice,
+                    qty: newQty,
+                    status: newStatus
+                });
+                new Image().src = GOOGLE_SHEET_API + "?" + params.toString();
             }
         }
 
@@ -732,13 +739,14 @@
                 appData.stock = appData.stock.filter(i => i.id !== id);
                 localStorage.setItem('market_stock_v7', JSON.stringify(appData.stock));
 
-                fetch(GOOGLE_SHEET_API, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: "deleteStock", id: id })
-                }).then(() => fetchStockFromSheet()).catch(err => console.log(err));
+                const params = new URLSearchParams({
+                    action: "deleteStock",
+                    id: id
+                });
+                new Image().src = GOOGLE_SHEET_API + "?" + params.toString();
 
                 renderDashboard();
+                renderStock();
             });
         }
 
@@ -815,8 +823,9 @@
             const item = appData.stock.find(i => i.id === id);
             if (item) {
                 document.getElementById('quick-sell-id').value = item.id;
-                document.getElementById('quick-sell-name').innerText = item.name;
+                document.getElementById('quick-sell-name').innerText = `${item.name} (เหลือ ${item.qty || 1} ชิ้น)`;
                 document.getElementById('quick-sell-price-input').value = item.price;
+                document.getElementById('quick-sell-qty-input').value = 1;
                 document.getElementById('quickSellModal').classList.remove('hidden');
             }
         }
@@ -825,35 +834,34 @@
             document.getElementById('quickSellModal').classList.add('hidden');
         }
 
-        // ฟังก์ชันขายด่วน (ปรับปรุงใหม่: ส่งข้อมูลผ่าน URL Parameters ทันที หน้าจอไม่ค้าง และวิ่งเข้าชีตแน่นอน)
         function confirmQuickSell() {
             const id = document.getElementById('quick-sell-id').value;
-            const finalPrice = parseFloat(document.getElementById('quick-sell-price-input').value);
+            const unitPrice = parseFloat(document.getElementById('quick-sell-price-input').value);
+            const sellQty = parseInt(document.getElementById('quick-sell-qty-input').value) || 1;
+            const finalTotalAmount = unitPrice * sellQty;
 
-            if (isNaN(finalPrice) || finalPrice < 0) {
-                alert("กรุณากรอกราคาขายให้ถูกต้องด้วยนะคะ");
+            if (isNaN(unitPrice) || unitPrice < 0 || sellQty <= 0) {
+                alert("กรุณากรอกราคาและจำนวนให้ถูกต้องด้วยนะคะ");
                 return;
             }
 
             const stockItem = appData.stock.find(i => i.id === id);
             if (stockItem) {
-                stockItem.qty = Math.max(0, (stockItem.qty || 1) - 1);
-                
-                if (stockItem.qty === 0) {
-                    stockItem.status = '🔴 ขายแล้ว (Sold)';
-                } else {
-                    stockItem.status = '🟢 พร้อมขาย (In Stock)';
+                const currentQty = stockItem.qty || 1;
+                if (sellQty > currentQty) {
+                    alert(`สินค้าในสต๊อกมีเหลือแค่ ${currentQty} ชิ้นเท่านั้นจ้าแม่ค้า!`);
+                    return;
                 }
-                
-                stockItem.soldPrice = finalPrice;
+
+                stockItem.qty = Math.max(0, currentQty - sellQty);
+                stockItem.status = stockItem.qty === 0 ? '🔴 ขายแล้ว (Sold)' : '🟢 พร้อมขาย (In Stock)';
+                stockItem.soldPrice = unitPrice;
                 localStorage.setItem('market_stock_v7', JSON.stringify(appData.stock));
 
-                // 1. ปิดหน้าต่างทันทีแบบไม่ค้าง
                 closeQuickSellModal();
                 renderPOSStock();
                 renderDashboard();
 
-                // 2. ส่งข้อมูลอัปเดตสต๊อกไป Google Sheet (ผ่าน Image Beacon ป้องกันติด CORS)
                 const updateParams = new URLSearchParams({
                     action: "updateStockQty",
                     id: stockItem.id,
@@ -863,15 +871,14 @@
                 });
                 new Image().src = GOOGLE_SHEET_API + "?" + updateParams.toString();
 
-                // 3. บันทึกประวัติการขายลง Local และส่งเข้าชีท Sales ทันที
-                const saleItemName = `${stockItem.name} (${finalPrice.toFixed(2)}฿)`;
+                const saleItemName = `${stockItem.name} (${unitPrice}฿ x ${sellQty})`;
                 const todayStr = new Date().toISOString().slice(0, 10);
 
                 appData.sales.push({
                     date: todayStr,
                     items: saleItemName,
-                    qty: 1,
-                    amount: finalPrice
+                    qty: sellQty,
+                    amount: finalTotalAmount
                 });
                 localStorage.setItem('market_sales_v7', JSON.stringify(appData.sales));
                 renderDashboard();
@@ -880,8 +887,8 @@
                     action: "addSale",
                     date: todayStr,
                     items: saleItemName,
-                    qty: "1",
-                    amount: finalPrice
+                    qty: String(sellQty),
+                    amount: finalTotalAmount
                 });
                 new Image().src = GOOGLE_SHEET_API + "?" + saleParams.toString();
             }
@@ -894,16 +901,17 @@
                 const amount = parseFloat(document.getElementById('expense-amount').value);
                 const date = document.getElementById('expense-date').value;
 
-                const expenseData = { action: "addExpense", date, type, amount, note: "-" };
-
-                appData.expenses.push(expenseData);
+                appData.expenses.push({ date, type, amount, note: "-" });
                 localStorage.setItem('market_expenses_v7', JSON.stringify(appData.expenses));
 
-                fetch(GOOGLE_SHEET_API, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify(expenseData)
-                }).then(() => fetchExpensesFromSheet()).catch(err => console.log(err));
+                const params = new URLSearchParams({
+                    action: "addExpense",
+                    date: date,
+                    type: type,
+                    amount: amount,
+                    note: "-"
+                });
+                new Image().src = GOOGLE_SHEET_API + "?" + params.toString();
 
                 e.target.reset();
                 document.getElementById('expense-date').valueAsDate = new Date();
@@ -933,14 +941,14 @@
             const newDate = document.getElementById('edit-expense-date').value;
 
             if (index >= 0 && appData.expenses[index]) {
-                appData.expenses[index] = { action: "addExpense", date: newDate, type: newType, amount: newAmount, note: "-" };
+                appData.expenses[index] = { date: newDate, type: newType, amount: newAmount, note: "-" };
                 localStorage.setItem('market_expenses_v7', JSON.stringify(appData.expenses));
 
-                fetch(GOOGLE_SHEET_API, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: "syncAllExpenses", expenses: appData.expenses })
-                }).then(() => fetchExpensesFromSheet()).catch(err => console.log(err));
+                const params = new URLSearchParams({
+                    action: "syncAllExpenses",
+                    expensesData: JSON.stringify(appData.expenses)
+                });
+                new Image().src = GOOGLE_SHEET_API + "?" + params.toString();
 
                 closeEditExpenseModal();
                 renderDashboard();
@@ -952,11 +960,11 @@
                 appData.expenses.splice(index, 1);
                 localStorage.setItem('market_expenses_v7', JSON.stringify(appData.expenses));
 
-                fetch(GOOGLE_SHEET_API, {
-                    method: "POST",
-                    headers: { "Content-Type": "text/plain;charset=utf-8" },
-                    body: JSON.stringify({ action: "syncAllExpenses", expenses: appData.expenses })
-                }).then(() => fetchExpensesFromSheet()).catch(err => console.log(err));
+                const params = new URLSearchParams({
+                    action: "syncAllExpenses",
+                    expensesData: JSON.stringify(appData.expenses)
+                });
+                new Image().src = GOOGLE_SHEET_API + "?" + params.toString();
 
                 renderDashboard();
             });
