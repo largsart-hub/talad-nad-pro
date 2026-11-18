@@ -26,10 +26,26 @@
 
     <!-- Modal จัดการสต๊อกสินค้า -->
     <div id="editStockModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white border-2 border-pink-300 p-6 rounded-[2.5rem] max-w-sm w-full space-y-4 shadow-2xl" onclick="event.stopPropagation()">
+        <div class="bg-white border-2 border-pink-300 p-6 rounded-[2.5rem] max-w-sm w-full space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
             <h3 class="font-bold text-base text-pink-600 flex items-center gap-2">📦 จัดการแก้ไขสินค้า</h3>
             <input type="hidden" id="edit-stock-id">
             
+            <!-- ส่วนจัดการรูปภาพสินค้าตอนแก้ไข -->
+            <div>
+                <label class="block text-xs font-medium text-slate-600 mb-1">รูปภาพสินค้า (เพิ่มหรือเปลี่ยนรูป)</label>
+                <div class="grid grid-cols-2 gap-2 mb-2">
+                    <label class="flex items-center justify-center gap-1.5 bg-pink-500 hover:bg-pink-600 text-white p-2.5 rounded-2xl cursor-pointer text-xs font-bold transition shadow-md shadow-pink-200">
+                        <span>📷 ถ่ายรูปสด</span>
+                        <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleEditImageSelect(event)">
+                    </label>
+                    <label class="flex items-center justify-center gap-1.5 bg-rose-500 hover:bg-rose-600 text-white p-2.5 rounded-2xl cursor-pointer text-xs font-bold transition shadow-md shadow-rose-200">
+                        <span>🖼️ เลือกจากคลัง</span>
+                        <input type="file" accept="image/*" multiple class="hidden" onchange="handleEditImageSelect(event)">
+                    </label>
+                </div>
+                <div id="edit-extra-preview" class="grid grid-cols-4 gap-2.5 p-3 border border-pink-200 rounded-2xl bg-pink-50/30 max-h-36 overflow-y-auto"></div>
+            </div>
+
             <div>
                 <label class="block text-xs font-medium text-slate-600 mb-1">ชื่อสินค้า / รายละเอียด</label>
                 <input type="text" id="edit-name-input" class="w-full bg-pink-50/50 border border-pink-300 rounded-2xl p-3 text-sm text-slate-800 font-bold focus:border-pink-500 outline-none">
@@ -61,7 +77,7 @@
         </div>
     </div>
 
-    <!-- Modal ขายด่วนทันทีเมื่อคลิกสินค้าในหน้า POS (รองรับเลือกจำนวนชิ้น) -->
+    <!-- Modal ขายด่วน -->
     <div id="quickSellModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white border-2 border-pink-300 p-6 rounded-[2.5rem] max-w-sm w-full space-y-4 shadow-2xl text-center" onclick="event.stopPropagation()">
             <div class="text-3xl">🛍️</div>
@@ -116,7 +132,7 @@
         </div>
     </div>
 
-    <!-- Popup ป๊อปอัพยืนยันการกระทำกลาง -->
+    <!-- Popup ยืนยัน -->
     <div id="confirmModal" class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center p-4 backdrop-blur-sm">
         <div class="bg-white border-2 border-pink-300 p-6 rounded-[2.5rem] max-w-sm w-full space-y-4 shadow-2xl text-center" onclick="event.stopPropagation()">
             <div class="text-4xl animate-bounce">🎀</div>
@@ -128,7 +144,7 @@
         </div>
     </div>
 
-    <!-- Header คิตตี้พาสเทล -->
+    <!-- Header -->
     <header class="bg-white/80 backdrop-blur-md border-b-2 border-pink-200 text-slate-800 shadow-lg sticky top-0 z-40">
         <div class="max-w-xl mx-auto px-4 py-3 flex justify-between items-center">
             <h1 class="text-sm font-bold flex items-center gap-2 text-pink-600">
@@ -149,7 +165,7 @@
 
     <main class="max-w-xl mx-auto p-4 space-y-4">
 
-        <!-- TAB 1: MANUAL ADD & AI VISION -->
+        <!-- TAB 1: MANUAL ADD -->
         <section id="tab-manual-add" class="tab-content space-y-4">
             <div class="bg-white/90 border-2 border-pink-200 p-5 rounded-[2.5rem] shadow-xl space-y-4 backdrop-blur-sm">
                 <div class="flex justify-between items-center">
@@ -173,7 +189,7 @@
                 </div>
 
                 <div id="preview-box" class="hidden space-y-3">
-                    <p class="text-xs text-slate-500 font-medium">รูปภาพที่เลือก (<span id="selected-count">0</span> รูป) - <span class="text-pink-500">คลิกดูภาพใหญ่ / กด ✕ ลบรูป</span>:</p>
+                    <p class="text-xs text-slate-500 font-medium">รูปภาพที่เลือก (<span id="selected-count">0</span> รูป):</p>
                     <div id="preview-grid" class="grid grid-cols-4 gap-2.5 p-3 border border-pink-200 rounded-2xl bg-pink-50/30 max-h-44 overflow-y-auto"></div>
                     
                     <button type="button" onclick="realAiAnalyze()" class="w-full bg-gradient-to-r from-pink-500 to-rose-500 hover:opacity-90 text-white py-3 rounded-2xl font-bold text-xs shadow-lg shadow-pink-200 transition flex items-center justify-center gap-2">
@@ -210,12 +226,8 @@
         <!-- TAB 2: POS -->
         <section id="tab-pos" class="tab-content hidden space-y-4">
             <div class="bg-white/90 border-2 border-pink-200 p-5 rounded-[2.5rem] space-y-3.5 backdrop-blur-sm shadow-xl">
-                <h2 class="font-bold text-sm text-pink-600 flex justify-between items-center">
-                    <span>⚡ POS ขายด่วน (คลิกที่สินค้าเพื่อขายทันที)</span>
-                </h2>
-                
+                <h2 class="font-bold text-sm text-pink-600">⚡ POS ขายด่วน (คลิกที่สินค้าเพื่อขายทันที)</h2>
                 <input type="text" id="pos-search" oninput="renderPOSStock()" placeholder="🔍 ค้นหาชื่อสินค้า..." class="w-full bg-pink-50/30 border border-pink-200 rounded-2xl p-3 text-sm text-slate-800 focus:border-pink-500 outline-none transition">
-
                 <div id="pos-stock-grid" class="flex flex-col gap-3 max-h-[500px] overflow-y-auto pt-1 pr-1"></div>
             </div>
         </section>
@@ -227,9 +239,7 @@
                     <h2 class="font-bold text-sm text-pink-600">📦 คลังสินค้าทั้งหมด</h2>
                     <button onclick="switchTab('manual-add')" class="bg-pink-500 hover:bg-pink-600 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition shadow-md shadow-pink-200">+ เพิ่มสินค้า</button>
                 </div>
-                
                 <input type="text" id="stock-search" oninput="renderStock()" placeholder="🔍 ค้นหาชื่อสินค้าในสต๊อก..." class="w-full bg-pink-50/30 border border-pink-200 rounded-2xl p-3 text-sm text-slate-800 focus:border-pink-500 outline-none transition">
-
                 <div id="stock-list" class="flex flex-col gap-3 max-h-[420px] overflow-y-auto pr-1"></div>
             </div>
         </section>
@@ -293,10 +303,9 @@
                 </div>
             </div>
 
-            <!-- ประวัติการขาย (มีกรองวันที่) -->
             <div class="bg-white/90 border-2 border-pink-200 p-5 rounded-[2.5rem] shadow-xl backdrop-blur-sm space-y-3">
                 <div class="flex justify-between items-center flex-wrap gap-2">
-                    <h3 class="font-bold text-pink-600 text-sm">📜 ประวัติการขาย (จากชีท Sales)</h3>
+                    <h3 class="font-bold text-pink-600 text-sm">📜 ประวัติการขาย</h3>
                     <div class="flex items-center gap-1.5">
                         <input type="date" id="filter-sales-date" onchange="renderSalesHistory()" class="bg-pink-50/50 border border-pink-300 rounded-xl px-2.5 py-1 text-xs text-slate-700 outline-none focus:border-pink-500">
                         <button onclick="document.getElementById('filter-sales-date').value=''; renderSalesHistory();" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-2.5 py-1 rounded-xl text-xs font-bold transition">ล้างวันที่</button>
@@ -319,7 +328,7 @@
     </main>
 
     <script>
-        const GOOGLE_SHEET_API = "https://script.google.com/macros/s/AKfycbxWQ-OGwiy6BFbTvx4ZiqT0dqyEsueJpHj0G4XtfMKcLe-obye4b3eZLg_JyLUsLeny/exec";
+        const GOOGLE_SHEET_API = "https://script.google.com/macros/s/AKfycbxeN-clJxWCzMyRiIHAu3tEpdlErkY7fePC9kunU-gdq_KnIoFdU0udLDj4ykMTBx2-/exec";
 
         let appData = {
             stock: JSON.parse(localStorage.getItem('market_stock_v7')) || [],
@@ -328,6 +337,7 @@
         };
 
         let selectedImagesBase64 = [];
+        let editingImagesBase64 = [];
         let currentModalImages = [];
         let currentModalIndex = 0;
 
@@ -407,12 +417,10 @@
             const confirmBtn = document.getElementById('confirm-btn');
             const newBtn = confirmBtn.cloneNode(true);
             confirmBtn.parentNode.replaceChild(newBtn, confirmBtn);
-            
             newBtn.addEventListener('click', () => {
                 closeConfirmModal();
                 onConfirmCallback();
             });
-
             document.getElementById('confirmModal').classList.remove('hidden');
         }
 
@@ -426,9 +434,7 @@
                 el.classList.remove('bg-pink-500', 'font-bold', 'shadow-md', 'shadow-pink-200', 'text-white');
                 el.classList.add('hover:bg-pink-100', 'font-medium', 'text-pink-600');
             });
-            
             document.getElementById('tab-' + tabId).classList.remove('hidden');
-            
             event.currentTarget.classList.remove('hover:bg-pink-100', 'font-medium', 'text-pink-600');
             event.currentTarget.classList.add('bg-pink-500', 'font-bold', 'shadow-md', 'shadow-pink-200', 'text-white');
             
@@ -484,71 +490,47 @@
 
         function handleImageSelect(event) {
             const files = event.target.files;
-            if (files && files.length > 0) {
-                let processedCount = 0;
-                
-                Array.from(files).forEach((file) => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const img = new Image();
-                        img.onload = function() {
-                            const MAX_WIDTH = 400;
-                            const MAX_HEIGHT = 400;
-                            let width = img.width;
-                            let height = img.height;
-
-                            if (width > height) {
-                                if (width > MAX_WIDTH) {
-                                    height *= MAX_WIDTH / width;
-                                    width = MAX_WIDTH;
-                                }
-                            } else {
-                                if (height > MAX_HEIGHT) {
-                                    width *= MAX_HEIGHT / height;
-                                    height = MAX_HEIGHT;
-                                }
-                            }
-
-                            const canvas = document.createElement('canvas');
-                            canvas.width = width;
-                            canvas.height = height;
-                            const ctx = canvas.getContext('2d');
-                            ctx.drawImage(img, 0, 0, width, height);
-
-                            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
-
-                            selectedImagesBase64.push(compressedBase64);
-                            processedCount++;
-                            
-                            if (processedCount === files.length) {
-                                renderImagePreview();
-                            }
-                        };
-                        img.src = e.target.result;
+            if (!files || files.length === 0) return;
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 300, MAX_HEIGHT = 300;
+                        let width = img.width, height = img.height;
+                        if (width > height) {
+                            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                        } else {
+                            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                        }
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        selectedImagesBase64.push(canvas.toDataURL('image/jpeg', 0.3));
+                        renderImagePreview();
                     }
-                    reader.readAsDataURL(file);
-                });
-            }
+                    img.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            });
         }
 
         function renderImagePreview() {
             const grid = document.getElementById('preview-grid');
             const previewBox = document.getElementById('preview-box');
             document.getElementById('selected-count').innerText = selectedImagesBase64.length;
-
             if (selectedImagesBase64.length === 0) {
                 previewBox.classList.add('hidden');
                 grid.innerHTML = '';
                 return;
             }
-
             grid.innerHTML = selectedImagesBase64.map((imgSrc, index) => `
                 <div class="relative group">
-                    <img src="${imgSrc}" class="w-full h-16 object-cover rounded-2xl border border-pink-300 cursor-pointer hover:opacity-80 transition shadow-md" onclick="openImageModal(selectedImagesBase64, ${index})">
-                    <button type="button" onclick="removeSelectedImage(${index})" class="absolute -top-1.5 -right-1.5 bg-rose-500 hover:bg-rose-600 text-white w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shadow-lg transition">✕</button>
+                    <img src="${imgSrc}" class="w-full h-16 object-cover rounded-2xl border border-pink-300 cursor-pointer shadow-md" onclick="openImageModal(selectedImagesBase64, ${index})">
+                    <button type="button" onclick="removeSelectedImage(${index})" class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shadow">✕</button>
                 </div>
             `).join('');
-
             previewBox.classList.remove('hidden');
         }
 
@@ -557,70 +539,92 @@
             renderImagePreview();
         }
 
+        function handleEditImageSelect(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 300, MAX_HEIGHT = 300;
+                        let width = img.width, height = img.height;
+                        if (width > height) {
+                            if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
+                        } else {
+                            if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
+                        }
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        editingImagesBase64.push(canvas.toDataURL('image/jpeg', 0.3));
+                        renderEditImagePreview();
+                    }
+                    img.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            });
+            event.target.value = '';
+        }
+
+        function renderEditImagePreview() {
+            const extraPreview = document.getElementById('edit-extra-preview');
+            if (editingImagesBase64.length === 0) {
+                extraPreview.innerHTML = '<p class="col-span-full text-center text-xs text-slate-400 py-2">ยังไม่มีรูปภาพ (กดปุ่มด้านบนเพื่อเพิ่มรูป)</p>';
+                return;
+            }
+            extraPreview.innerHTML = editingImagesBase64.map((imgSrc, idx) => `
+                <div class="relative group">
+                    <img src="${imgSrc}" class="w-full h-16 object-cover rounded-2xl border border-pink-300 shadow cursor-pointer" onclick="openImageModal(editingImagesBase64, ${idx})">
+                    <button type="button" onclick="removeEditingImage(${idx})" class="absolute -top-1.5 -right-1.5 bg-rose-500 text-white w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center shadow">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function removeEditingImage(index) {
+            editingImagesBase64.splice(index, 1);
+            renderEditImagePreview();
+        }
+
         async function realAiAnalyze() {
             if (selectedImagesBase64.length === 0) {
                 alert("กรุณาถ่ายรูปหรือเลือกรูปสินค้าก่อนให้ AI วิเคราะห์ค่ะแม่ค้า");
                 return;
             }
-
             let apiKey = localStorage.getItem('gemini_user_api_key');
             if (!apiKey) {
-                apiKey = prompt("กรุณากรอก Gemini API Key ของคุณ (ระบบจะจำไว้ใช้ครั้งต่อไป):");
+                apiKey = prompt("กรุณากรอก Gemini API Key ของคุณ:");
                 if (!apiKey) return;
                 localStorage.setItem('gemini_user_api_key', apiKey.trim());
             }
-
             const btn = event.target;
             const originalText = btn.innerText;
             btn.innerText = "✨ กำลังให้ AI วิเคราะห์ภาพ...";
             btn.disabled = true;
-
             try {
                 const base64Data = selectedImagesBase64[0].split(',')[1];
-                
-                const promptText = `คุณเป็นพ่อค้าแม่ค้ามืออาชีพขายเสื้อผ้ามือสองตลาดนัดและงานแบรนด์วินเทจ ช่วยวิเคราะห์รูปสินค้าชิ้นนี้จากภาพถ่าย แล้วตอบกลับมาในรูปแบบ JSON สั้นๆ เท่านั้น ห้ามมีข้อความอื่น โดยมีโครงสร้างดังนี้:
+                const promptText = `คุณเป็นพ่อค้าแม่ค้ามืออาชีพขายเสื้อผ้ามือสอง ช่วยวิเคราะห์รูปสินค้าชิ้นนี้ ตอบกลับมาเป็น JSON สั้นๆ เท่านั้น:
                 {
-                  "name": "ชื่อสินค้า / แบรนด์ / รายละเอียดกระชับ (เช่น เสื้อยืดวินเทจ / เสื้อเชิ้ตแบรนด์แท้)",
-                  "price": ตัวเลขราคาขายเดี่ยวที่เหมาะสมเพื่อให้สินค้าออกไว (งานทั่วไปตั้ง 89-120 บาท, งานหัวแบรนด์แท้/งานวินเทจสวยๆ ตั้ง 150-350 บาทตามความเหมาะสม),
-                  "cost": ตัวเลขทุนประเมินเริ่มต้น (เช่น 25 หรือ 50),
-                  "note": "หมายเหตุสภาพสินค้าสั้นๆ (เช่น ทุน 25 / สภาพดี หรือ ทุน 50 / งานแบรนด์แท้)"
+                  "name": "ชื่อสินค้า / แบรนด์ / รายละเอียดกระชับ",
+                  "price": ตัวเลขราคาขายเดี่ยว (เช่น 100 หรือ 250),
+                  "cost": ตัวเลขทุน (เช่น 25),
+                  "note": "สภาพสินค้าสั้นๆ"
                 }`;
-
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${apiKey.trim()}`, {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey.trim()}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: promptText },
-                                { inline_data: { mime_type: "image/jpeg", data: base64Data } }
-                            ]
-                        }]
-                    })
+                    body: JSON.stringify({ contents: [{ parts: [{ text: promptText }, { inline_data: { mime_type: "image/jpeg", data: base64Data } }] }] })
                 });
-
                 const data = await response.json();
-                
-                if (data.error) {
-                    if (data.error.code === 400 || data.error.code === 403) {
-                        localStorage.removeItem('gemini_user_api_key');
-                    }
-                    throw new Error(data.error.message || "API Error");
-                }
-
                 const textResult = data.candidates[0].content.parts[0].text;
-                const jsonString = textResult.replace(/```json/g, '').replace(/```/g, '').trim();
-                const resultObj = JSON.parse(jsonString);
-
+                const resultObj = JSON.parse(textResult.replace(/```json/g, '').replace(/```/g, '').trim());
                 document.getElementById('manual-name').value = resultObj.name || "";
                 document.getElementById('manual-price').value = resultObj.price || 100;
                 document.getElementById('manual-note').value = resultObj.note || "";
-
-                alert("✨ AI วิเคราะห์รูปภาพสำเร็จและประเมินราคาเรียบร้อยแล้วค่า!");
-
+                alert("✨ AI วิเคราะห์รูปภาพสำเร็จแล้วค่ะ!");
             } catch (error) {
-                console.error(error);
-                alert("เกิดข้อผิดพลาด: " + error.message + "\nกรุณาตรวจสอบ API Key ของคุณอีกครั้ง");
+                alert("เกิดข้อผิดพลาด: " + error.message);
             } finally {
                 btn.innerText = originalText;
                 btn.disabled = false;
@@ -640,14 +644,13 @@
 
             let costVal = 25;
             const parsedCost = parseFloat(noteInput);
-            if (!isNaN(parsedCost)) {
-                costVal = parsedCost;
-            }
+            if (!isNaN(parsedCost)) costVal = parsedCost;
 
             const finalName = `${name} ${noteInput && isNaN(parsedCost) ? '(' + noteInput + ')' : ''}`;
             const allImagesJoined = selectedImagesBase64.length > 0 ? selectedImagesBase64.join('||') : 'https://via.placeholder.com/150';
 
             const newItem = {
+                action: "addStock",
                 id: 'ID_' + Date.now().toString().slice(-6) + Math.floor(Math.random() * 900 + 100),
                 name: finalName,
                 cost: costVal,
@@ -661,22 +664,11 @@
             appData.stock.push(newItem);
             localStorage.setItem('market_stock_v7', JSON.stringify(appData.stock));
 
-            const params = new URLSearchParams({
-                action: "addStock",
-                id: newItem.id,
-                name: newItem.name,
-                cost: newItem.cost,
-                price: newItem.price,
-                qty: newItem.qty,
-                status: newItem.status,
-                date: newItem.date,
-                image: newItem.image
-            });
-            new Image().src = GOOGLE_SHEET_API + "?" + params.toString();
+            new Image().src = GOOGLE_SHEET_API + "?" + new URLSearchParams(newItem).toString();
 
             resetManualForm();
             switchTab('stock');
-            setTimeout(() => fetchStockFromSheet(), 1500);
+            setTimeout(() => { fetchStockFromSheet(); }, 2000);
         }
 
         function openEditStockModal(id) {
@@ -687,6 +679,9 @@
                 document.getElementById('edit-price-input').value = item.price;
                 document.getElementById('edit-qty-input').value = item.qty || 1;
                 document.getElementById('edit-status-input').value = item.status || '🟢 พร้อมขาย (In Stock)';
+                
+                editingImagesBase64 = item.image ? item.image.split('||') : [];
+                renderEditImagePreview();
                 document.getElementById('editStockModal').classList.remove('hidden');
             }
         }
@@ -709,26 +704,30 @@
 
             if (newQty === 0) newStatus = '🔴 ขายแล้ว (Sold)';
 
+            const finalImagesJoined = editingImagesBase64.length > 0 ? editingImagesBase64.join('||') : 'https://via.placeholder.com/150';
+
             const item = appData.stock.find(i => i.id === id);
             if (item) {
                 item.name = newName;
                 item.price = newPrice;
                 item.qty = newQty;
                 item.status = newStatus;
+                item.image = finalImagesJoined;
 
                 localStorage.setItem('market_stock_v7', JSON.stringify(appData.stock));
-
                 closeEditModal();
                 renderDashboard();
                 renderStock();
 
+                // ส่งพารามิเตอร์ image ไปบันทึกใน Google Sheet อย่างถูกต้อง
                 const params = new URLSearchParams({
                     action: "updateStockItem",
                     id: item.id,
                     name: newName,
                     price: newPrice,
                     qty: newQty,
-                    status: newStatus
+                    status: newStatus,
+                    image: finalImagesJoined
                 });
                 new Image().src = GOOGLE_SHEET_API + "?" + params.toString();
             }
@@ -739,12 +738,7 @@
                 appData.stock = appData.stock.filter(i => i.id !== id);
                 localStorage.setItem('market_stock_v7', JSON.stringify(appData.stock));
 
-                const params = new URLSearchParams({
-                    action: "deleteStock",
-                    id: id
-                });
-                new Image().src = GOOGLE_SHEET_API + "?" + params.toString();
-
+                new Image().src = GOOGLE_SHEET_API + "?" + new URLSearchParams({ action: "deleteStock", id: id }).toString();
                 renderDashboard();
                 renderStock();
             });
@@ -805,7 +799,7 @@
                 const firstImg = item.image ? item.image.split('||')[0] : 'https://via.placeholder.com/150';
                 return `
                     <div onclick="openQuickSellModal('${item.id}')" class="bg-pink-50/50 border border-pink-200 rounded-3xl p-3 flex items-center gap-4 cursor-pointer hover:border-pink-500 hover:shadow-lg transition group">
-                        <img src="${firstImg}" class="w-20 h-20 object-cover rounded-2xl border border-pink-300 shadow cursor-pointer group-hover:scale-105 transition shrink-0" onclick="event.stopPropagation(); openImageModal('${item.image}')">
+                        <img src="${firstImg}" class="w-20 h-20 object-cover rounded-2xl border border-pink-300 shadow shrink-0" onclick="event.stopPropagation(); openImageModal('${item.image}')">
                         <div class="flex-1 min-w-0">
                             <div class="font-bold text-sm text-slate-800 line-clamp-2">${item.name}</div>
                             <div class="flex items-center gap-2 mt-2">
@@ -862,35 +856,28 @@
                 renderPOSStock();
                 renderDashboard();
 
-                const updateParams = new URLSearchParams({
+                new Image().src = GOOGLE_SHEET_API + "?" + new URLSearchParams({
                     action: "updateStockQty",
                     id: stockItem.id,
                     qty: stockItem.qty,
                     status: stockItem.status,
                     soldPrice: stockItem.soldPrice
-                });
-                new Image().src = GOOGLE_SHEET_API + "?" + updateParams.toString();
+                }).toString();
 
                 const saleItemName = `${stockItem.name} (${unitPrice}฿ x ${sellQty})`;
                 const todayStr = new Date().toISOString().slice(0, 10);
 
-                appData.sales.push({
-                    date: todayStr,
-                    items: saleItemName,
-                    qty: sellQty,
-                    amount: finalTotalAmount
-                });
+                appData.sales.push({ date: todayStr, items: saleItemName, qty: sellQty, amount: finalTotalAmount });
                 localStorage.setItem('market_sales_v7', JSON.stringify(appData.sales));
                 renderDashboard();
 
-                const saleParams = new URLSearchParams({
+                new Image().src = GOOGLE_SHEET_API + "?" + new URLSearchParams({
                     action: "addSale",
                     date: todayStr,
                     items: saleItemName,
                     qty: String(sellQty),
                     amount: finalTotalAmount
-                });
-                new Image().src = GOOGLE_SHEET_API + "?" + saleParams.toString();
+                }).toString();
             }
         }
 
@@ -904,15 +891,7 @@
                 appData.expenses.push({ date, type, amount, note: "-" });
                 localStorage.setItem('market_expenses_v7', JSON.stringify(appData.expenses));
 
-                const params = new URLSearchParams({
-                    action: "addExpense",
-                    date: date,
-                    type: type,
-                    amount: amount,
-                    note: "-"
-                });
-                new Image().src = GOOGLE_SHEET_API + "?" + params.toString();
-
+                new Image().src = GOOGLE_SHEET_API + "?" + new URLSearchParams({ action: "addExpense", date, type, amount, note: "-" }).toString();
                 e.target.reset();
                 document.getElementById('expense-date').valueAsDate = new Date();
                 renderDashboard();
@@ -944,12 +923,7 @@
                 appData.expenses[index] = { date: newDate, type: newType, amount: newAmount, note: "-" };
                 localStorage.setItem('market_expenses_v7', JSON.stringify(appData.expenses));
 
-                const params = new URLSearchParams({
-                    action: "syncAllExpenses",
-                    expensesData: JSON.stringify(appData.expenses)
-                });
-                new Image().src = GOOGLE_SHEET_API + "?" + params.toString();
-
+                new Image().src = GOOGLE_SHEET_API + "?" + new URLSearchParams({ action: "syncAllExpenses", expensesData: JSON.stringify(appData.expenses) }).toString();
                 closeEditExpenseModal();
                 renderDashboard();
             }
@@ -960,12 +934,7 @@
                 appData.expenses.splice(index, 1);
                 localStorage.setItem('market_expenses_v7', JSON.stringify(appData.expenses));
 
-                const params = new URLSearchParams({
-                    action: "syncAllExpenses",
-                    expensesData: JSON.stringify(appData.expenses)
-                });
-                new Image().src = GOOGLE_SHEET_API + "?" + params.toString();
-
+                new Image().src = GOOGLE_SHEET_API + "?" + new URLSearchParams({ action: "syncAllExpenses", expensesData: JSON.stringify(appData.expenses) }).toString();
                 renderDashboard();
             });
         }
@@ -976,9 +945,7 @@
             const totalBox = document.getElementById('expense-total-box');
 
             let filtered = appData.expenses;
-            if (filterDate) {
-                filtered = filtered.filter(ex => ex.date === filterDate);
-            }
+            if (filterDate) filtered = filtered.filter(ex => ex.date === filterDate);
 
             const totalFilteredExp = filtered.reduce((sum, ex) => sum + ex.amount, 0);
             if (filterDate) {
@@ -994,11 +961,11 @@
                     <div class="flex justify-between items-center bg-pink-50/50 p-3 rounded-3xl border border-pink-200 shadow-sm">
                         <div>
                             <span class="text-slate-700 font-medium">${ex.date} | ${ex.type}</span>
-                            <div class="text-rose-500 font-bold text-sm mt-0.5">${ex.amount.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})} ฿</div>
+                            <div class="text-rose-500 font-bold text-sm mt-0.5">${ex.amount.toLocaleString()} ฿</div>
                         </div>
                         <div class="flex gap-2">
-                            <button onclick="openEditExpenseModal(${originalIndex})" class="bg-pink-500 hover:bg-pink-600 text-white px-3 py-1 rounded-xl text-xs font-bold transition shadow">✏️ แก้ไข</button>
-                            <button onclick="deleteExpense(${originalIndex})" class="bg-rose-500 hover:bg-rose-600 text-white px-3 py-1 rounded-xl text-xs font-bold transition shadow">🗑️ ลบ</button>
+                            <button onclick="openEditExpenseModal(${originalIndex})" class="bg-pink-500 text-white px-3 py-1 rounded-xl text-xs font-bold">✏️</button>
+                            <button onclick="deleteExpense(${originalIndex})" class="bg-rose-500 text-white px-3 py-1 rounded-xl text-xs font-bold">🗑️</button>
                         </div>
                     </div>
                 `;
@@ -1011,9 +978,7 @@
             const salesTotalBox = document.getElementById('sales-filter-total');
 
             let filtered = appData.sales;
-            if (filterDate) {
-                filtered = filtered.filter(sale => sale.date === filterDate);
-            }
+            if (filterDate) filtered = filtered.filter(sale => sale.date === filterDate);
 
             const totalFilteredSales = filtered.reduce((sum, s) => sum + s.amount, 0);
             if (filterDate) {
@@ -1029,7 +994,7 @@
                         <span class="text-slate-400 text-[10px]">${sale.date}</span>
                         <div class="text-slate-700 font-medium">${sale.items}</div>
                     </div>
-                    <div class="text-emerald-600 font-bold">+${sale.amount.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2})} ฿</div>
+                    <div class="text-emerald-600 font-bold">+${sale.amount.toLocaleString()} ฿</div>
                 </div>
             `).join('') || '<p class="text-slate-400 text-center py-3">ยังไม่มีประวัติการขายจ้า</p>';
         }
@@ -1039,14 +1004,14 @@
             document.getElementById('stat-stock-count').innerText = inStockCount + ' ชิ้น';
 
             const totalSales = appData.sales.reduce((sum, s) => sum + s.amount, 0);
-            document.getElementById('stat-sales').innerText = totalSales.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2}) + ' ฿';
+            document.getElementById('stat-sales').innerText = totalSales.toLocaleString() + ' ฿';
 
             const totalExpense = appData.expenses.reduce((sum, e) => sum + e.amount, 0);
-            document.getElementById('stat-expense').innerText = totalExpense.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2}) + ' ฿';
+            document.getElementById('stat-expense').innerText = totalExpense.toLocaleString() + ' ฿';
 
             const netProfit = totalSales - totalExpense;
             const profitEl = document.getElementById('stat-profit');
-            profitEl.innerText = netProfit.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 2}) + ' ฿';
+            profitEl.innerText = netProfit.toLocaleString() + ' ฿';
             profitEl.className = `text-2xl font-bold mt-1 ${netProfit >= 0 ? 'text-pink-600' : 'text-rose-500'}`;
             
             renderSalesHistory();
